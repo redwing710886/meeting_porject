@@ -168,9 +168,84 @@ connection.close()
 print ('OK')
 
 
-# In[9]:
+# In[30]:
 
-#DB內容查詢
+#DB句子查詢
+# 235/1396133
+import os
+import xml.etree.ElementTree as ET
+import time
+import pymysql
+from colorama import init
+
+modalverb = ["應","要","可","能","可以","須","應該","必須","會","得","需要","當","應當","能夠","該","需"]
+file_path = '../../desktop/SCS_4.0/'
+connection = pymysql.connect(host="127.0.0.1", user="redwing", passwd="", db="modalverb",charset='utf8')
+
+file_list = []
+
+for file in os.listdir(file_path):
+    file_list.append(file)
+
+try:
+    with connection.cursor() as cursor:
+        
+        sql = 'select `file_sentence`,`verb_index`,`two_pos` from `verb_in_sentence` where `two_verb` = "{}"'
+        
+        ch = '能,要'
+        pos = '(D),(D)'
+        
+        cursor.execute(sql.format(ch))
+        
+        for i in cursor:
+            
+            '''#選擇何種詞性
+            if i[2] != pos:
+                continue'''
+            
+            index = i[0].split('@')
+
+            tree = ET.parse(file_path+index[0])
+            root = tree.getroot()
+            
+            sentence = root.findall('./article/text/sentence')[int(index[1])].text
+            
+            temp = ''
+            
+            count = 0
+            for j in sentence.split():
+                vi = [int(i[1].split(',')[0]),int(i[1].split(',')[1])] #verb index
+                if count in vi:
+                    temp = temp + '\033[31;46m' + j + '\033[0m'
+                else:
+                    temp = temp + j#j.split('(')[0]
+                count = count + 1
+                    
+            sentence = temp
+            
+            '''#印出前後句
+            sentence_pre = 'head'
+            sentence_next = 'end'
+            
+            if int(index[1]) > 0:
+                sentence_pre = root.findall('./article/text/sentence')[int(index[1])-1].text
+            if int(index[1]) < len(root.findall('./article/text/sentence'))-1:
+                sentence_next = root.findall('./article/text/sentence')[int(index[1])+1].text'''
+            
+            #print (sentence_pre)
+            print (sentence)
+            #print (sentence_next)
+            
+            print (i[1])
+            print ()
+            time.sleep(0.3)
+finally:
+    connection.close()
+
+
+# In[32]:
+
+#從DB查詢某verb其詞性各別出現頻率
 # 235/1396133
 import os
 import xml.etree.ElementTree as ET
@@ -189,22 +264,29 @@ for file in os.listdir(file_path):
 try:
     with connection.cursor() as cursor:
         
-        sql = 'select `file_sentence`,`two_pos` from `verb_in_sentence` where `two_verb` = "{}"'
+        sql = 'select `two_pos` from `verb_in_sentence` where `two_verb` = "{}"'
         
-        ch = '要,要'
+        ch = '應該,要'
         
         cursor.execute(sql.format(ch))
         
+        pos_num = {}
+        
+        psum = 0
+        
         for i in cursor:
-            index = i[0].split('@')
-
-            tree = ET.parse(file_path+index[0])
-            root = tree.getroot()
-            
-            print (root.findall('./article/text/sentence')[int(index[1])].text)
-            print (i[1])
-            print ()
-            time.sleep(0.5)
+            psum = psum + 1
+            if i[0] not in pos_num:
+                pos_num[i[0]] = 1
+            else:
+                pos_num[i[0]] = pos_num[i[0]] + 1
+        
+        pos_num = sorted(pos_num.items(), key=lambda d:d[1], reverse = True)
+        
+        print (ch,len(pos_num),psum)
+        for i in pos_num:
+            print (i[0],i[1])
+        
 finally:
     connection.close()
 
