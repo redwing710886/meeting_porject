@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[3]:
+# In[ ]:
 
 #XML內容抓取
 # 235/1396133
@@ -190,8 +190,8 @@ for file in os.listdir(file_path):
     file_list.append(file)
 
 two_verb = {} 
-match_line = 0  
-match_line2 = 0
+match_line = 0  #情緒動詞句子數
+match_line2 = 0 #情緒動詞句子數(重複)
 
 with connection.cursor() as cursor:
     
@@ -199,7 +199,7 @@ with connection.cursor() as cursor:
     
     for file in file_list:
         
-        verbline_in_file = 0
+        verbline_in_file = 0 #每個file有情緒動詞句子數
 
         tree = ET.parse(file_path+file)
         root = tree.getroot()
@@ -266,7 +266,7 @@ print (match_line2)
 print ('OK')
 
 
-# In[3]:
+# In[2]:
 
 #DB句子查詢
 # 235/1396133
@@ -462,193 +462,4 @@ try:
             time.sleep(0.3)
 finally:
     connection.close()
-
-
-# In[1]:
-
-#雷震日記
-#有些字無法判斷
-import xlrd
-import time
-import sys
-
-from ckip import CKIPSegmenter, CKIPParser
-segmenter = CKIPSegmenter('104753018', 'sayanouta')
-
-file = "C:/Users/user/Desktop/雷震日記全表單-資訊處理-20160329.xls"
-book = xlrd.open_workbook(file)
-
-#print ("The number of worksheets is", book.nsheets)
-#print ("Worksheet name(s):", book.sheet_names())
-sh = book.sheet_by_index(0)
-#print (sh.name, sh.nrows, sh.ncols)
-'''print ("Cell D30 is", sh.cell_value(rowx=1, colx=0))
-for rx in range(sh.nrows):
-    #print (type(sh.row(rx)[0]))
-    print (sh.cell_value(rowx=rx, colx=0))'''
-
-#16 21 29 34 36 53 55 66 68
-for rx in range(sh.nrows):
-    if rx == 0:
-        continue
-    content = sh.cell_value(rowx=rx, colx=8)
-    
-    print (rx)
-    
-    lines = []
-    temp = ''
-    
-    for word in content:
-        temp = temp + word
-        if word == '。' or word == '，':
-            lines.append(temp)
-            temp = ''
-    
-    for line in lines:
-        try:
-            segmented_result = segmenter.process(line)
-
-            words = []
-
-            if segmented_result['status_code'] != '0':
-                    print ('Process Failed: ' + segmented_result['status'])
-            else:
-                for sentence in segmented_result['result']:
-                    for term in sentence:
-                        words.append(term['term']+'('+term['pos']+')')
-                        '''if term['pos'] == 'COMMACATEGORY' or term['pos'] == 'PERIODCATEGORY' or (term['pos'] == 'QUESTIONCATEGORY' and 
-                            term['pos'] == '?'):
-                            #print (' '.join(words))
-                            #print ()
-                            words = []'''
-                print (' '.join(words))
-        except:
-            e = sys.exc_info()[0]
-            print (rx,e)
-    break
-
-
-# In[26]:
-
-#XML排版
-from xml.etree import ElementTree as etree
-from xml.etree.ElementTree import Element, SubElement, ElementTree
- 
-#title author bookname publisher publishdate page theme keyword text
-
-root = Element('root')
-
-article = SubElement(root, 'acticle')
-article.set("no", "1")
-
-title = SubElement(article, 'title')
-author = SubElement(article, 'author')
-bookname = SubElement(article, 'bookname')
-publisher = SubElement(article, 'publisher')
-publishdate = SubElement(article, 'publishdate')
-page = SubElement(article, 'page')
-theme= SubElement(article, 'theme')
-keyword = SubElement(article, 'keyword')
-text = SubElement(article, 'text')
-text.text = '雷震日記'
-
-tree = ElementTree(root)
-
-#tree.write('C:/Users/user/Desktop/result.xml', encoding='utf-8')
-
-xml_string = etree.tostring(root,'utf-8')
-print (xml_string.decode('utf8'))
-
-
-# In[32]:
-
-#建立雷震日記XML
-from xml.etree import ElementTree as etree
-from xml.etree.ElementTree import Element, SubElement, ElementTree
-import xlrd
-import time
-import sys
-import datetime
-
-from ckip import CKIPSegmenter, CKIPParser
-segmenter = CKIPSegmenter('104753018', 'sayanouta')
-
-file = "C:/Users/user/Desktop/雷震日記全表單-資訊處理-20160329.xls"
-book = xlrd.open_workbook(file)
-sh = book.sheet_by_index(0)
- 
-#title author bookname publisher publishdate page theme keyword text
-
-li = ['title','author','bookname','publisher','publishdate','page','theme','keyword']
-
-root = Element('root')
-
-for rx in range(sh.nrows):
-    if rx == 0:
-        continue
-    
-    article = SubElement(root, 'acticle')
-    article.set("no", str(rx))
-    
-    for i in range(len(li)):
-        temp = SubElement(article,li[i])
-        if li[i] == 'publishdate':
-            a1_as_datetime = datetime.date(*xlrd.xldate_as_tuple(sh.cell_value(rowx=rx, colx=i), 0)[:3])
-            temp.text = str(a1_as_datetime)
-        else:
-            temp.text = str(sh.cell_value(rowx=rx, colx=i))
-    text = SubElement(article,'text')
-    
-    content = sh.cell_value(rowx=rx, colx=8)
-    
-    print (rx)
-    
-    lines = []
-    temp = ''
-    
-    for word in content:
-        temp = temp + word
-        if word == '。' or word == '，':
-            lines.append(temp.strip())
-            temp = ''
-    
-    for line in lines:
-        try:
-            segmented_result = segmenter.process(line)
-
-            words = []
-            sentence = SubElement(text, 'sentence')
-            check = False
-
-            if segmented_result['status_code'] != '0':
-                    print ('Process Failed: ' + segmented_result['status'])
-            else:
-                for sentences in segmented_result['result']:
-                    for term in sentences:
-                        if term['pos'] == 'QUESTIONCATEGORY':
-                            check = True
-                        words.append(term['term']+'('+term['pos']+')')
-                
-                if check:
-                    sentence.text = str(line)
-                    sentence.set('error','古字')
-                else:
-                    sentence.text = ' '.join(words)
-                
-        except:
-            sentence.text = str(line)
-            sentence.set('error','斷詞失敗')
-            e = sys.exc_info()[0]
-            print (rx,e)
-    
-    if rx == 2:
-        break
-    
-tree = ElementTree(root)
-
-tree.write('C:/Users/user/Desktop/result.xml', encoding='utf-8')
-
-#xml_string = etree.tostring(root,'utf-8')
-#print (xml_string.decode('utf8'))
-print ('end')
 
