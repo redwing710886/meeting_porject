@@ -97,7 +97,7 @@ xml_string = etree.tostring(root,'utf-8')
 print (xml_string.decode('utf8'))
 
 
-# In[ ]:
+# In[1]:
 
 #建立雷震日記XML
 from xml.etree import ElementTree as etree
@@ -121,11 +121,13 @@ li = ['title','author','bookname','publisher','publishdate','page','theme','keyw
 
 root = Element('root')
 
-ci = 4871
+#ci = 9441
 fail = False
+fii = [7235,7249,7340,7407,7437,7457,7981,8077,8104,8116,8131,8573,8645,8658,8674,8793,9346]
 
-for rx in range(sh.nrows-ci):
-    rx = rx + ci
+#for rx in range(sh.nrows-ci):
+for rx in fii:
+    #rx = rx + ci
     if rx == 0:
         continue
     
@@ -185,31 +187,31 @@ for rx in range(sh.nrows-ci):
             print (rx,e)
             #fail = True
     
-    if rx % 10 == 0:
+    #if rx % 10 == 0:
         '''if fail:
             root = Element('root')
             rx = rx - 10
             print ('return')
             fail = False
             continue'''
-        tree = ElementTree(root)
+        '''tree = ElementTree(root)
         num = str(int(rx / 10))
         if len(num) == 1:
             num = '00'+num
         elif len(num) == 2:
             num = '0'+num
         tree.write(output_file.format(num), encoding='utf-8')
-        root = Element('root')
+        root = Element('root')'''
 
-'''tree = ElementTree(root)
-tree.write(output_file.format(str(int(rx / 10)+1)), encoding='utf-8')'''
+tree = ElementTree(root)
+tree.write(output_file.format('other'), encoding='utf-8')
 
 #xml_string = etree.tostring(root,'utf-8')
 #print (xml_string.decode('utf8'))
 print ('end')
 
 
-# In[1]:
+# In[16]:
 
 #問題句子所在比例分析
 import xml.etree.ElementTree as ET
@@ -245,7 +247,8 @@ for file in file_list:
                     error_split = error_split + 1
                 else:
                     print ('other')
-    print (file,num,error_word,error_split,str(round(error_word*100/num,2))+'%')
+    error_count = (error_word+error_split)*100/num
+    print (file,num,error_word,error_split,str(round(error_count,2))+'%')
     
     all_num = all_num + num
     all_error_word = all_error_word + error_word
@@ -254,9 +257,82 @@ for file in file_list:
 print (all_num,all_error_word,all_error_split,str(round((all_error_split+all_error_word)*100/all_num,2))+'%')
 
 
-# In[9]:
+# In[7]:
 
-#diary XML內容抓取
+#diary XML內容抓取 one 情態動詞
+import codecs
+import os
+import xml.etree.ElementTree as ET
+import time
+import sys
+
+modalverb = ["應","要","可","能","可以","須","應該","必須","會","得","需要","當","應當","能夠","該","需"]
+file_path = '../../desktop/temp/'
+
+file_list = []
+
+for file in os.listdir(file_path):
+    file_list.append(file)
+
+one_verb = {} 
+    
+error_num = 0
+skip = 0
+
+for file in file_list:
+    
+    tree = ET.parse(file_path+file)
+    root = tree.getroot()
+
+    for sentence in root.iter('sentence'):
+        if len(sentence.attrib) > 0:
+            skip = skip + 1
+            continue
+            
+        try:
+            temp = sentence.text.split()
+
+            verb_list = []
+            
+            for i in temp:
+                word = i.split('(')
+                word[1] = '('+word[1].split('[')[0]
+
+                if word[0] in modalverb:
+                    verb_list.append(''.join(word))
+
+            if len(verb_list) > 0:
+                for l in verb_list:
+                    if l in one_verb:
+                        one_verb[l] = one_verb[l] + 1
+                    else:
+                        one_verb[l] = 1
+     
+        except:
+            '''e = sys.exc_info()[0]
+            print (e)
+            time.sleep(0.3)'''
+            error_num = error_num + 1
+
+one_verb_count = 0
+
+for i in one_verb:
+    one_verb_count = one_verb_count + one_verb[i]
+
+print (error_num) #0
+print (len(one_verb)) #37
+print (one_verb_count) #14964
+print (skip) #18031
+
+one_verb = sorted(one_verb.items(), key=lambda d:d[1], reverse = True)
+
+for i in one_verb:
+    print (i[0],i[1])
+
+
+# In[3]:
+
+#diary XML內容抓取 pair情態動詞
 import codecs
 import os
 import xml.etree.ElementTree as ET
@@ -328,20 +404,79 @@ print (len(pop)) #101/188
 for j in pop:
     two_verb.pop(j)'''
 
+two_verb_count = 0
+
+for i in two_verb:
+    two_verb_count = two_verb_count + two_verb[i]
+
 two_verb = sorted(two_verb.items(), key=lambda d:d[1], reverse = True)
 
 print (error_num) #0
-print (much) #12
-print (len(two_verb)) #135
-print (skip) #9152
+print (much) #14
+print (len(two_verb)) #160
+print (two_verb_count) #561
+print (skip) #18031
 
 for i in two_verb:
     print (i[0],i[1])
 
 
+# In[14]:
+
+#找出符合要求的句子(重複句沒抓) one
+import xml.etree.ElementTree as ET
+import os
+import time
+from colorama import init
+
+modalverb = ["應","要","可","能","可以","須","應該","必須","會","得","需要","當","應當","能夠","該","需"]
+file_path = "C:/Users/user/Desktop/temp/"
+file_list = []
+
+for file in os.listdir(file_path):
+    file_list.append(file)
+
+find = '當(P)'   
+    
+for file in file_list:
+    tree = ET.parse(file_path+file)
+    root = tree.getroot()
+
+    for child in root:
+        for sentence in child[8]:
+            if len(sentence.attrib) == 0:
+                temp = sentence.text.split()
+                
+                lis = []
+                
+                if find in temp:
+                    for ch in temp:
+                        if ch == find:
+                            lis.append('\033[31;46m' + ch + '\033[0m') 
+                        else:
+                            lis.append(ch)
+                    print (''.join(lis))
+
+                '''for i in temp:
+
+                    word = i.split('(')
+                    word[1] = '('+word[1].split('[')[0]
+
+                    if word[0] in modalverb:
+                        verb_list.append(''.join(word))
+                        verb_index.append(vi)
+
+                    vi = vi + 1
+                    
+                if len(verb_list) == 2:
+                    if verb_list[0] == find[0] and verb_list[1] == find[1]:
+                        print (''.join(sentence.text.split()))'''
+        time.sleep(0.01)
+
+
 # In[2]:
 
-#找出符合要求的句子(重複句沒抓)
+#找出符合要求的句子(重複句沒抓) two
 import xml.etree.ElementTree as ET
 import os
 import time
