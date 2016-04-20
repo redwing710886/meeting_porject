@@ -192,7 +192,7 @@ print (t)
    
 
 
-# In[63]:
+# In[64]:
 
 #情態動詞分析 1273711行 
 import codecs
@@ -232,13 +232,13 @@ for file in files:
                     if word[0] in modalverb:
                         verb_list.append(''.join(word))
 
-                    if len(verb_list) >= 2:
-                        for l in range(len(verb_list)-1):
-                            k = l + 1
-                            if (verb_list[l],verb_list[k]) in two_verb:
-                                two_verb[(verb_list[l],verb_list[k])] = two_verb[(verb_list[l],verb_list[k])] + 1
-                            else:
-                                two_verb[(verb_list[l],verb_list[k])] = 1
+                if len(verb_list) >= 2:
+                    for l in range(len(verb_list)-1):
+                        k = l + 1
+                        if (verb_list[l],verb_list[k]) in two_verb:
+                            two_verb[(verb_list[l],verb_list[k])] = two_verb[(verb_list[l],verb_list[k])] + 1
+                        else:
+                            two_verb[(verb_list[l],verb_list[k])] = 1
 
 two_verb_count = 0
 
@@ -248,8 +248,81 @@ for i in two_verb:
 two_verb = sorted(two_verb.items(), key=lambda d:d[1], reverse = True)
 
 print (len(two_verb)) #488
-print (two_verb_count) #42806
+print (two_verb_count) #6418
 
 for i in two_verb:
     print (i[0],i[1])
+
+
+# In[73]:
+
+#情態動詞尋找 1273711行 
+#02 15457 16080兩段資料似乎重複
+#有引用句也會導致重複
+import codecs
+import time
+from colorama import init
+
+modalverb = ["應","要","可","能","可以","須","應該","必須","會","得","需要","當","應當","能夠","該","需"]
+path = "C:\\Users\\user\\Desktop\\FreeChina\\{}_All.txt"
+
+files = []
+for i in range(23):
+    if i < 9:
+        files.append('0'+str(i+1))
+    else:
+        files.append(str(i+1))
+        
+find = ['要(D)', '能(D)']
+
+two_verb = {}
+        
+for file in files:
+    with codecs.open(path.format(file),'r','utf8') as f:
+        
+        content = f.readlines()
+        print (file)
+        
+        for line in content:
+            
+            if line[0] != '#':
+                
+                words = line.split()
+                verb_list = []
+                verb_index = []
+                verb_index_a = []
+                check = False
+                index = 0
+                
+                for word in words:
+                    if word[0] == '(' or word[0] == '（':
+                        word = [word[0],word[1:]]
+                    else:
+                        word = word.split('(')
+                        word[1] = '('+word[1]
+
+                    if word[0] in modalverb:
+                        verb_list.append(''.join(word))
+                        verb_index.append(index)
+                    index = index + 1
+
+                if len(verb_list) >= 2:
+                    for l in range(len(verb_list)-1):
+                        k = l + 1
+                        if find[0] == verb_list[l] and find[1] == verb_list[k]:
+                            check = True
+                            if verb_index[l] not in verb_index_a:
+                                verb_index_a.append(verb_index[l])
+                            if verb_index[k] not in verb_index_a:
+                                verb_index_a.append(verb_index[k])
+                
+                for i in verb_index_a:
+                    words[i] = '\033[31;46m' + words[i] + '\033[0m'
+                            
+                
+                if check:
+                    print (''.join(words))
+                    time.sleep(0.3)
+                    
+                    
 
