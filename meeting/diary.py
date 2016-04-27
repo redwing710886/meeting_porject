@@ -97,7 +97,7 @@ xml_string = etree.tostring(root,'utf-8')
 print (xml_string.decode('utf8'))
 
 
-# In[1]:
+# In[ ]:
 
 #建立雷震日記XML
 from xml.etree import ElementTree as etree
@@ -111,7 +111,7 @@ from ckip import CKIPSegmenter, CKIPParser
 segmenter = CKIPSegmenter('104753018', 'sayanouta')
 
 file = "C:/Users/user/Desktop/雷震日記全表單-資訊處理-20160329.xls"
-output_file = "C:/Users/user/Desktop/diary/diary_{}.xml"
+output_file = "C:/Users/user/Desktop/new_diary/diary_{}.xml"
 book = xlrd.open_workbook(file)
 sh = book.sheet_by_index(0)
  
@@ -121,12 +121,10 @@ li = ['title','author','bookname','publisher','publishdate','page','theme','keyw
 
 root = Element('root')
 
-#ci = 9441
+ci = 0
 fail = False
-fii = [7235,7249,7340,7407,7437,7457,7981,8077,8104,8116,8131,8573,8645,8658,8674,8793,9346]
 
-#for rx in range(sh.nrows-ci):
-for rx in fii:
+for rx in range(sh.nrows-ci):
     #rx = rx + ci
     if rx == 0:
         continue
@@ -187,24 +185,24 @@ for rx in fii:
             print (rx,e)
             #fail = True
     
-    #if rx % 10 == 0:
+    if rx % 10 == 0:
         '''if fail:
             root = Element('root')
             rx = rx - 10
             print ('return')
             fail = False
             continue'''
-        '''tree = ElementTree(root)
+        tree = ElementTree(root)
         num = str(int(rx / 10))
         if len(num) == 1:
             num = '00'+num
         elif len(num) == 2:
             num = '0'+num
         tree.write(output_file.format(num), encoding='utf-8')
-        root = Element('root')'''
+        root = Element('root')
 
 tree = ElementTree(root)
-tree.write(output_file.format('other'), encoding='utf-8')
+tree.write(output_file.format('945'), encoding='utf-8')
 
 #xml_string = etree.tostring(root,'utf-8')
 #print (xml_string.decode('utf8'))
@@ -330,7 +328,7 @@ for i in one_verb:
     print (i[0],i[1])
 
 
-# In[3]:
+# In[1]:
 
 #diary XML內容抓取 pair情態動詞
 import codecs
@@ -421,7 +419,7 @@ for i in two_verb:
     print (i[0],i[1])
 
 
-# In[14]:
+# In[1]:
 
 #找出符合要求的句子(重複句沒抓) one
 import xml.etree.ElementTree as ET
@@ -436,7 +434,7 @@ file_list = []
 for file in os.listdir(file_path):
     file_list.append(file)
 
-find = '當(P)'   
+find = '可(ADV)'   
     
 for file in file_list:
     tree = ET.parse(file_path+file)
@@ -474,7 +472,7 @@ for file in file_list:
         time.sleep(0.01)
 
 
-# In[2]:
+# In[3]:
 
 #找出符合要求的句子(重複句沒抓) two
 import xml.etree.ElementTree as ET
@@ -543,4 +541,82 @@ with codecs.open("C:/Users/user/Desktop/雷震日記.txt",'w','utf8') as f:
         f.write(''.join(content.strip().split())+'\r\n')
         f.write('\r\n')
 print (num)
+
+
+# In[1]:
+
+#修正雷震日記XML部分斷詞失敗問題
+from xml.etree import ElementTree as ET
+from xml.etree.ElementTree import Element, SubElement, ElementTree
+import xlrd
+import time
+import os
+import codecs
+
+from ckip import CKIPSegmenter, CKIPParser
+segmenter = CKIPSegmenter('104753018', 'sayanouta')
+
+file = "C:/Users/user/Desktop/雷震日記全表單-資訊處理-20160329.xls"
+input_file = "C:/Users/user/Desktop/diary/"
+book = xlrd.open_workbook(file)
+sh = book.sheet_by_index(0)
+
+file_list = []
+
+for file in os.listdir(input_file):
+    file_list.append(file)
+
+with codecs.open("C:/Users/user/Desktop/new.txt",'w','utf8') as f:
+    
+    for file in file_list:
+
+        tree = ET.parse(input_file+file)
+        root = tree.getroot()
+
+        for article in root:
+
+            index = int(article.get('no'))
+            content = sh.cell_value(rowx=index, colx=8)
+
+            lines = []
+            temp = ''
+
+            for word in content:
+                temp = temp + word
+                if word == '。' or word == '，':
+                    lines.append(temp.strip())
+                    temp = ''
+
+            num = len(article[8])
+
+            if len(lines) != num:
+                print (file,index,len(lines),num)
+                
+                f.write(file+' no.'+str(index)+'\r\n')
+
+                for line in lines:
+                    
+                    try:
+                        segmented_result = segmenter.process(line)
+
+                        words = []
+                        check = False
+
+                        if segmented_result['status_code'] != '0':
+                                print ('Process Failed: ' + segmented_result['status'])
+                        else:
+                            for sentences in segmented_result['result']:
+                                for term in sentences:
+                                    if term['pos'] == 'QUESTIONCATEGORY':
+                                        check = True
+                                    words.append(term['term']+'('+term['pos']+')')
+
+                            if check:
+                                f.write('古字：'+line+'\r\n')
+                            else:
+                                f.write(' '.join(words)+'\r\n')
+                    except:
+                        f.write('斷詞失敗：'+line+'\r\n')
+                
+                f.write('\r\n')
 
