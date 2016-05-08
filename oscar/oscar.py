@@ -456,3 +456,106 @@ try:
 finally:
     connection.close()
 
+
+# In[99]:
+
+#抓取資料，演員尚待驗證
+import requests
+#from urllib.request import urlopen
+import json
+import pymysql
+import time
+import codecs
+
+#connection = pymysql.connect(host="127.0.0.1", user="redwing", passwd="", db="Oscar",charset='utf8')
+#movie = ['Spotlight','The Big Short','Bridge of Spies','Brooklyn','Mad Max: Fury Road','The Martian','The Revenant','Room']
+path = "C:\\Users\\user\\Desktop\\"
+movie = []
+
+u = 'http://www.omdbapi.com/?t={}&y=&plot=short&r=json&tomatoes=true' #抓取年分，導演，編劇，影片id
+cast = 'http://imdb.wemakesites.net/api/{}' #抓取演員
+staff = 'http://www.imdb.com/xml/find?json=1&nr=1&nm=on&q={}' #抓取演員id
+
+with codecs.open(path+"movie.txt",'rb','utf8') as f:
+    for line in f:
+        movie.append(line.strip())
+        
+#從電影名稱得到電影ID
+'''with codecs.open(path+"movie.csv",'wb','utf8') as f:
+    f.write("Title,imdbID,Year,Genre,tomatoMeter\r\n")
+    for file in movie:
+        content = requests.get(u.format('+'.join(file.split())))
+        resp = json.loads(content.text)
+        #print (resp['Title'],resp["imdbID"],resp["Year"],resp["tomatoMeter"])
+        #加引號是要處理標題內有分號
+        f.write('"'+resp['Title']+'"'+','+resp["imdbID"]+','+resp["Year"]
+                +','+'&'.join(resp["Genre"].split(', '))+','+resp["tomatoMeter"]+'\r\n')'''
+
+index = 1
+
+with codecs.open(path+"actor.csv",'wb','utf8') as f:
+    #print ("name,id,imdbID,job,job comment\r\n")
+    f.write("name,id,imdbID,job,job comment\r\n")
+    for file in movie:
+        print (file)
+        content = requests.get(u.format('+'.join(file.split())))
+        resp = json.loads(content.text)
+
+        def name_find(job):
+
+            for i in resp[job].split(', '):
+                temp = i.split(' (')
+
+                content2 = requests.get(staff.format('+'.join(temp[0].split())))
+                resp2 = json.loads(content2.text)
+
+                if len(temp) > 1:
+                    job_comment = '('+temp[1]
+                else:
+                    job_comment = '(NaN)'
+
+                try:
+                    #print (temp[0],resp2['name_popular'][0]['id'],resp["imdbID"],job,job_comment)
+                    f.write(temp[0]+','+resp2['name_popular'][0]['id']+','+resp["imdbID"]+','+job+','+job_comment+'\r\n')
+                except:
+                    try:
+                        #print (temp[0],resp2['name_exact'][0]['id'],resp["imdbID"],job,job_comment)
+                        f.write(temp[0]+','+resp2['name_exact'][0]['id']+','+resp["imdbID"]+','+job+','+job_comment+'\r\n')
+                    except:
+                        #print (temp[0],resp2['name_approx'][0]['id'],resp["imdbID"],job,job_comment)
+                        f.write(temp[0]+','+resp2['name_approx'][0]['id']+','+resp["imdbID"]+','+job+','+job_comment+'\r\n')
+
+        def actor_find():
+
+            content3 = requests.get(cast.format(resp["imdbID"]))
+            resp3 = json.loads(content3.text)
+
+            for actor in resp3["data"]["cast"]:
+
+                content2 = requests.get(staff.format(actor))
+                resp2 = json.loads(content2.text)
+
+                try:
+                    #print (actor,resp2['name_popular'][0]['id'],resp["imdbID"],"Actor","(NaN)")
+                    f.write(actor+','+resp2['name_popular'][0]['id']+','+resp["imdbID"]+','+"Actor"+','+"(NaN)"+'\r\n')
+                except:
+                    try:
+                        #print (actor,resp2['name_exact'][0]['id'],resp["imdbID"],"Actor","(NaN)")
+                        f.write(actor+','+resp2['name_exact'][0]['id']+','+resp["imdbID"]+','+"Actor"+','+"(NaN)"+'\r\n')
+                    except:
+                        #print (actor,resp2['name_approx'][0]['id'],resp["imdbID"],"Actor","(NaN)")
+                        f.write(actor+','+resp2['name_approx'][0]['id']+','+resp["imdbID"]+','+"Actor"+','+"(NaN)"+'\r\n')
+
+        name_find("Director")
+        name_find("Writer")
+        actor_find()
+        time.sleep(30)
+        
+        if index % 10 == 0:
+            time.sleep(30)
+        
+        index = index + 1
+        
+    
+print ('END')
+
