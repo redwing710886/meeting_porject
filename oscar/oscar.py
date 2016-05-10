@@ -457,9 +457,11 @@ finally:
     connection.close()
 
 
-# In[45]:
+# In[6]:
 
-#抓取資料，演員尚待驗證
+#抓取資料
+#Alejandro G. Iñárritu = Alejandro González Iñárritu
+#Take 演員問題 Lost in Translation
 import requests
 #from urllib.request import urlopen
 import json
@@ -494,7 +496,8 @@ with codecs.open(path+"movie.txt",'rb','utf8') as f:
 index = 1
 
 #產生演員相關資訊，演員不見得是對的QQ
-with codecs.open(path+"actor.csv",'wb','utf8') as f:
+#新修正已OK，但須注意縮寫名字
+'''with codecs.open(path+"actor.csv",'wb','utf8') as f:
     #print ("name,id,imdbID,job,job comment\r\n")
     f.write("name,id,imdbID,job,job comment\r\n")
     for file in movie:
@@ -518,16 +521,16 @@ with codecs.open(path+"actor.csv",'wb','utf8') as f:
                 else:
                     job_comment = '(NaN)'
 
-                '''try:
-                    #print (temp[0],resp2['name_popular'][0]['id'],resp["imdbID"],job,job_comment)
-                    f.write(temp[0]+','+resp2['name_popular'][0]['id']+','+resp["imdbID"]+','+job+','+job_comment+'\r\n')
-                except:
-                    try:
-                        #print (temp[0],resp2['name_exact'][0]['id'],resp["imdbID"],job,job_comment)
-                        f.write(temp[0]+','+resp2['name_exact'][0]['id']+','+resp["imdbID"]+','+job+','+job_comment+'\r\n')
-                    except:
-                        #print (temp[0],resp2['name_approx'][0]['id'],resp["imdbID"],job,job_comment)
-                        f.write(temp[0]+','+resp2['name_approx'][0]['id']+','+resp["imdbID"]+','+job+','+job_comment+'\r\n')'''
+                #try:
+                #    #print (temp[0],resp2['name_popular'][0]['id'],resp["imdbID"],job,job_comment)
+                #    f.write(temp[0]+','+resp2['name_popular'][0]['id']+','+resp["imdbID"]+','+job+','+job_comment+'\r\n')
+                #except:
+                #    try:
+                #        #print (temp[0],resp2['name_exact'][0]['id'],resp["imdbID"],job,job_comment)
+                #        f.write(temp[0]+','+resp2['name_exact'][0]['id']+','+resp["imdbID"]+','+job+','+job_comment+'\r\n')
+                #    except:
+                #        #print (temp[0],resp2['name_approx'][0]['id'],resp["imdbID"],job,job_comment)
+                #        f.write(temp[0]+','+resp2['name_approx'][0]['id']+','+resp["imdbID"]+','+job+','+job_comment+'\r\n')
                 
                 try:
                     name = temp[0]
@@ -550,20 +553,20 @@ with codecs.open(path+"actor.csv",'wb','utf8') as f:
                 #content2 = requests.get(staff.format(actor))
                 #resp2 = json.loads(content2.text)
 
-                '''try:
-                    #print (actor,resp2['name_popular'][0]['id'],resp["imdbID"],"Actor","(NaN)")
-                    f.write(actor+','+resp2['name_popular'][0]['id']+','+resp["imdbID"]+','+"Actor"+','+"(NaN)"+'\r\n')
-                except:
-                    try:
-                        #print (actor,resp2['name_exact'][0]['id'],resp["imdbID"],"Actor","(NaN)")
-                        f.write(actor+','+resp2['name_exact'][0]['id']+','+resp["imdbID"]+','+"Actor"+','+"(NaN)"+'\r\n')
-                    except:
-                        #print (actor,resp2['name_approx'][0]['id'],resp["imdbID"],"Actor","(NaN)")
-                        f.write(actor+','+resp2['name_approx'][0]['id']+','+resp["imdbID"]+','+"Actor"+','+"(NaN)"+'\r\n')'''
+                #try:
+                #    #print (actor,resp2['name_popular'][0]['id'],resp["imdbID"],"Actor","(NaN)")
+                #    f.write(actor+','+resp2['name_popular'][0]['id']+','+resp["imdbID"]+','+"Actor"+','+"(NaN)"+'\r\n')
+                #except:
+                #    try:
+                #        #print (actor,resp2['name_exact'][0]['id'],resp["imdbID"],"Actor","(NaN)")
+                #        f.write(actor+','+resp2['name_exact'][0]['id']+','+resp["imdbID"]+','+"Actor"+','+"(NaN)"+'\r\n')
+                #    except:
+                #        #print (actor,resp2['name_approx'][0]['id'],resp["imdbID"],"Actor","(NaN)")
+                #        f.write(actor+','+resp2['name_approx'][0]['id']+','+resp["imdbID"]+','+"Actor"+','+"(NaN)"+'\r\n')
                 
                 try:
                     name = actor
-                    idd = soup.find_all("span",text=re.compile(name))[0].parent['href'].split('/')[2]
+                    idd = soup.find_all("span",text=name)[0].parent['href'].split('/')[2]
                     imdbid = resp["imdbID"]
 
                     #print (name,idd,imdbid,"Actor","(NaN)")
@@ -579,27 +582,7 @@ with codecs.open(path+"actor.csv",'wb','utf8') as f:
         if index % 10 == 0:
             time.sleep(30)
         
-        index = index + 1
-
-'''with codecs.open(path+"actor.csv",'rb','utf8') as f:
-    lines = f.readlines()
-    lines.pop(0)
-    
-    for file in lines:
-        name = file.split(',')[0]
-        idd = file.split(',')[1]
-        imdbid = file.split(',')[2]
-        
-        res = requests.get(imdb_cast.format(imdbid))
-        soup = BeautifulSoup(res.text, "lxml")
-        
-        try:
-            print (soup.find_all("a",text=re.compile(name))[0]['href'].split('/')[2])
-        except:
-            print (soup.find_all("span",text=re.compile(name))[0].parent['href'].split('/')[2])
-        time.sleep(0.1)'''
-        
-        
+        index = index + 1'''
 
 #確認演員是否真有出演電影
 '''with codecs.open(path+'actor.csv','rb','utf8') as f:
@@ -616,12 +599,109 @@ with codecs.open(path+"actor.csv",'wb','utf8') as f:
         files = []
         
         #因為可能有長期節目，所以不用年份而單純改以imdbid做比對
-        for i in resp['data']['filmography']:
-            files.append(i['info'].split('/')[4])
-        
-        if imdbid not in files:
-            print (resp['data']['title'],idd,imdbid)'''
+        #可能只有演員會有出演電影列表
+        if name.split(',')[3] == 'Actor':
+            for i in resp['data']['filmography']:
+                files.append(i['info'].split('/')[4])
 
-    
+            if imdbid not in files:
+                print (resp['data']['title'],idd,imdbid)
+        
+        index = index + 1
+        print (index)'''
+
+#各演員出演電影
+with codecs.open(path+'movie_more.csv','wb','utf8') as m:
+    with codecs.open(path+'actor.csv','rb','utf8') as f:
+        lines = f.readlines()
+        lines.pop(0)
+
+        for name in lines:
+            idd = name.split(',')[1]
+
+            content = requests.get(cast.format(idd))
+            resp = json.loads(content.text)
+
+            print (name.split(',')[0])
+            m.write('#'+name.split(',')[0]+'\r\n')
+
+            for i in resp['data']['filmography']:
+                try:
+                    year = int(i['year'].split(';')[1].split('/')[0])
+                    if year >= 2001 and year <= 2015:
+                        #print ('"'+i['title']+'"',year,i['info'].split('/')[4])
+                        m.write('"'+i['title']+'"'+','+str(year)+','+i['info'].split('/')[4]+'\r\n')
+                except ValueError:
+                    continue
+            index = index + 1
+            time.sleep(5)
+            if index % 30 == 0:
+                time.sleep(30)
+        
+        
+print ('END')
+
+
+# In[29]:
+
+#資料清理，拿掉actor內的comment，1、2層之間連結處理
+import codecs
+import time
+import json
+import requests
+
+path = "C:\\Users\\user\\Desktop\\"
+u= 'http://www.omdbapi.com/?i={}&y=&plot=short&r=json&tomatoes=true'
+dic = {}
+
+'''with codecs.open(path+'actor.csv','rb','utf8') as f:
+    with codecs.open(path+'actor_com.csv','wb','utf8') as g:
+        
+        content = f.readlines()
+        
+        for i in content:
+            temp = i.split(',')
+            
+            g.write(temp[0]+','+temp[1]+','+temp[2]+','+temp[3]+'\r\n')'''
+
+index = 0
+with codecs.open(path+"movie_more_clean.csv",'wb','utf8') as g:
+    with codecs.open(path+"movie_more.csv",'rb','utf8') as f:
+        content = f.readlines()
+
+        for i in content:
+            if i[0] == '#':
+                continue
+            temp = i.strip().split(',')
+
+            if len(temp) > 3:
+                temp = [','.join(temp[0:-2]),temp[-2],temp[-1]]
+
+            #print (temp[0][1:-1])
+            #time.sleep(0.3)
+
+            if temp[1] not in dic:
+                dic[temp[1]] = {temp[2]:temp[0]}
+            else:
+                if temp[2] not in dic[temp[1]]:
+                    dic[temp[1]][temp[2]] = temp[0]
+
+        g.write('Title'+','+'imdbID'+','+'Year'+','+'Genre'+','+'imdbRating'+','+'tomatoMeter'+'\r\n')
+        
+        for i in range(2001,2016):
+            for j in dic[str(i)]: 
+                
+                #content = requests.get(u.format(j))
+                #resp = json.loads(content.text)
+                
+                #print (dic[str(i)][j],j,str(i))
+                g.write(dic[str(i)][j]+','+j+','+str(i)+'\r\n')
+                #g.write(dic[str(i)][j]+','+j+','+str(i)+','+'&'.join(resp['Genre'].split(', '))
+                #        +','+resp['imdbRating']+','+resp['tomatoMeter']+'\r\n')
+                
+                '''index = index + 1
+                if index % 100 == 0:
+                    print (index)'''
+
 print ('END')
 
