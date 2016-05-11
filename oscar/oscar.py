@@ -82,7 +82,7 @@ finally:
     connection.close()
 
 
-# In[2]:
+# In[ ]:
 
 from urllib.request import urlopen
 import json
@@ -94,7 +94,7 @@ for i in resp['name_approx']:
     print (i)
 
 
-# In[9]:
+# In[ ]:
 
 from urllib.request import urlopen
 #http://imdb.wemakesites.net/api/IMDB_RESOURCE_ID
@@ -104,7 +104,7 @@ for i in resp['data']['filmography']:
     print (i)
 
 
-# In[4]:
+# In[ ]:
 
 #建立oscar的staff和id表
 #待解決問題：staff表內的重複資訊，如：Ridley Scott
@@ -226,7 +226,7 @@ finally:
     connection.close()
 
 
-# In[38]:
+# In[ ]:
 
 #建立oscar的node
 import pymysql
@@ -262,7 +262,7 @@ finally:
     connection.close()
 
 
-# In[36]:
+# In[ ]:
 
 #建立oscar的link
 import pymysql
@@ -320,7 +320,7 @@ finally:
     connection.close()
 
 
-# In[3]:
+# In[ ]:
 
 import requests
 from bs4 import BeautifulSoup
@@ -336,7 +336,7 @@ for name in soup.select('.name > a'):
     print ()
 
 
-# In[28]:
+# In[ ]:
 
 import pymysql
 import codecs
@@ -368,7 +368,7 @@ finally:
     connection.close()
 
 
-# In[28]:
+# In[ ]:
 
 #包含職位的IMDB資料提取
 import requests
@@ -457,11 +457,10 @@ finally:
     connection.close()
 
 
-# In[6]:
+# In[ ]:
 
 #抓取資料
 #Alejandro G. Iñárritu = Alejandro González Iñárritu
-#Take 演員問題 Lost in Translation
 import requests
 #from urllib.request import urlopen
 import json
@@ -584,7 +583,7 @@ index = 1
         
         index = index + 1'''
 
-#確認演員是否真有出演電影
+#(沒用過) 確認演員是否真有出演電影
 '''with codecs.open(path+'actor.csv','rb','utf8') as f:
     lines = f.readlines()
     lines.pop(0)
@@ -642,7 +641,7 @@ with codecs.open(path+'movie_more.csv','wb','utf8') as m:
 print ('END')
 
 
-# In[29]:
+# In[11]:
 
 #資料清理，拿掉actor內的comment，1、2層之間連結處理
 import codecs
@@ -664,8 +663,9 @@ dic = {}
             
             g.write(temp[0]+','+temp[1]+','+temp[2]+','+temp[3]+'\r\n')'''
 
-index = 0
-with codecs.open(path+"movie_more_clean.csv",'wb','utf8') as g:
+
+#重複電影資料清理
+'''with codecs.open(path+"movie_more_clean.csv",'wb','utf8') as g:
     with codecs.open(path+"movie_more.csv",'rb','utf8') as f:
         content = f.readlines()
 
@@ -677,31 +677,211 @@ with codecs.open(path+"movie_more_clean.csv",'wb','utf8') as g:
             if len(temp) > 3:
                 temp = [','.join(temp[0:-2]),temp[-2],temp[-1]]
 
-            #print (temp[0][1:-1])
-            #time.sleep(0.3)
-
             if temp[1] not in dic:
                 dic[temp[1]] = {temp[2]:temp[0]}
             else:
                 if temp[2] not in dic[temp[1]]:
                     dic[temp[1]][temp[2]] = temp[0]
 
-        g.write('Title'+','+'imdbID'+','+'Year'+','+'Genre'+','+'imdbRating'+','+'tomatoMeter'+'\r\n')
+        g.write('Title'+','+'imdbID'+','+'Year'+'\r\n')
         
         for i in range(2001,2016):
-            for j in dic[str(i)]: 
-                
-                #content = requests.get(u.format(j))
-                #resp = json.loads(content.text)
+            idsort = sorted(dic[str(i)]) #照imdbid排序
+            
+            for j in idsort: 
                 
                 #print (dic[str(i)][j],j,str(i))
-                g.write(dic[str(i)][j]+','+j+','+str(i)+'\r\n')
-                #g.write(dic[str(i)][j]+','+j+','+str(i)+','+'&'.join(resp['Genre'].split(', '))
-                #        +','+resp['imdbRating']+','+resp['tomatoMeter']+'\r\n')
+                g.write(dic[str(i)][j]+','+j+','+str(i)+'\r\n')'''
                 
-                '''index = index + 1
-                if index % 100 == 0:
-                    print (index)'''
 
+#電影資料欄位增加
+'''index = 2                
+with codecs.open(path+"movie_plus.csv",'wb','utf8') as g:
+    with codecs.open(path+"movie.csv",'rb','utf8') as f:
+        content = f.readlines()
+        
+        content.pop(0)
+        
+        g.write('Title'+','+'imdbID'+','+'Year'+','+'Type'+','+'Genre'+','+'imdbRating'+','+'tomatoMeter'+'\r\n')
+        
+        for i in content:
+            temp = i.strip().split(',')
+
+            if len(temp) > 5:
+                temp = [','.join(temp[0:len(temp)-4]),temp[-4],temp[-3],temp[-2],temp[-1]]
+                
+            try:
+                content = requests.get(u.format(temp[1]))
+                resp = json.loads(content.text)
+
+                #print (temp[0])
+                g.write(temp[0]+','+temp[1]+','+temp[2]+','+resp['Type']+','+'&'.join(resp['Genre'].split(', '))
+                        +','+resp['imdbRating']+','+resp['tomatoMeter']+'\r\n')
+            except:
+                print ('error',index,temp[0],temp[1],temp[2])
+            
+            index = index + 1
+            if index % 500 == 0:
+                print (index)
+                time.sleep(10)'''
+
+#movie篩選
+'''with codecs.open(path+'movie_more_only.csv','wb','utf') as g:
+    with codecs.open(path+'movie_more_clean.csv','rb','utf8') as f:
+        title = f.readline()
+        content = f.readlines()
+        
+        g.write(title)
+        
+        for i in content:
+            temp = i.strip().split(',')
+            
+            if temp[-4] == 'movie':
+                g.write(i)'''
+
+#去除N/A
+with codecs.open(path+'movie_more_exactly.csv','wb','utf') as g:
+    with codecs.open(path+'movie_more_only.csv','rb','utf8') as f:
+        title = f.readline()
+        content = f.readlines()
+        
+        g.write(title)
+        
+        for i in content:
+            temp = i.strip().split(',')
+            
+            check = [temp[-3],temp[-2],temp[-1]]
+            
+            if 'N/A' not in check:
+                g.write(i)
+
+print ('END')
+
+
+# In[23]:
+
+#統計資料內數值(其實直接用R跑比較快)
+import codecs
+import time
+import os
+
+path = "C:\\Users\\user\\Desktop\\"
+
+#分數統計
+'''with codecs.open(path+'movie_plus.csv','rb','utf8') as f:
+    content = f.readlines()
+    
+    content.pop(0)
+    
+    imdb_avg = 0
+    imdb_max = 0
+    imdb_min = 100
+    tomato_avg = 0
+    tomato_max = 0
+    tomato_min = 100
+    
+    for i in content:
+        
+        i = i.split(',')
+        imdb = float(i[-2])
+        tomato = float(i[-1])
+        
+        imdb_avg = imdb_avg + imdb
+        tomato_avg = tomato_avg + tomato
+        
+        if imdb > imdb_max:
+            imdb_max = imdb
+        if imdb < imdb_min:
+            imdb_min = imdb
+        if tomato > tomato_max:
+            tomato_max = tomato
+        if tomato < tomato_min:
+            tomato_min = tomato
+        
+    print ('imdb_avg:',round(imdb_avg/len(content),2))
+    print ('imdb_max:',imdb_max)
+    print ('imdb_min:',imdb_min)
+    print ('tomato_avg:',round(tomato_avg/len(content),2))
+    print ('tomato_max:',tomato_max)
+    print ('tomato_min:',tomato_min)'''
+
+#N/A統計
+'''with codecs.open(path+'movie_more_only.csv','rb','utf8') as f:
+    title = f.readline()
+    content = f.readlines()
+    
+    imdb_nan = 0
+    tomato_nan = 0
+    both_nan = 0
+    
+    for i in content:
+        temp = i.strip().split(',')
+        
+        if temp[-2] == 'N/A':
+            imdb_nan = imdb_nan + 1
+            if temp[-1] == 'N/A':
+                both_nan = both_nan + 1
+                tomato_nan = tomato_nan + 1
+        elif temp[-1] == 'N/A':
+            tomato_nan = tomato_nan + 1
+    print ('imdb_nan:',imdb_nan)
+    print ('tomato_nan:',tomato_nan)
+    print ('both_nan:',both_nan)'''
+
+#movie分類
+with codecs.open(path+'movie_more_exactly.csv','rb','utf8') as f:
+    title = f.readline()
+    content = f.readlines()
+    
+    genre = {}
+    
+    #加上標題
+    #file_list = []    
+    #for file in os.listdir(path+'genre\\'):
+    #    file_list.append(file)
+    #for i in file_list:
+    #    with codecs.open(path+'genre\\'+i,'wb','utf8') as g:
+    #        g.write(title)
+    
+    for i in content:
+        temp = i.strip().split(',')
+        
+        for j in temp[-3].split('&'):
+            if j not in genre:
+                genre[j] = 1
+            else:
+                genre[j] = genre[j] + 1
+            
+            if j == 'N/A':
+                j = 'Other'
+            #with codecs.open(path+'genre\\'+j+'.csv','ab','utf8') as g:
+            #    g.write(i)
+                #pass
+    
+    genre = sorted(genre.items(), key=lambda d:d[1], reverse = True)
+    
+    for i in genre:
+        print (i[0],i[1])
+
+#看各年分電影數量分布
+'''with codecs.open(path+'movie_more_exactly.csv','rb','utf8') as f:
+    title = f.readline()
+    content = f.readlines()
+    
+    year = {}
+    
+    for i in content:
+        temp = i.strip().split(',')
+
+        if temp[-5] not in year:
+            year[temp[-5]] = 1
+        else:
+            year[temp[-5]] = year[temp[-5]] + 1
+    
+    n = sorted(year)
+    for i in n:
+        print (i,year[i])'''
+    
+        
 print ('END')
 
