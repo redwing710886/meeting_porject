@@ -473,13 +473,24 @@ path = "C:\\Users\\user\\Desktop\\"
 movie = []
 
 imdb_cast = 'http://www.imdb.com/title/{}/fullcredits?ref_=tt_cl_sm#cast'
-u = 'http://www.omdbapi.com/?t={}&y=&plot=short&r=json&tomatoes=true' #抓取年分，導演，編劇，影片id
+#u = 'http://www.omdbapi.com/?t={}&y=&plot=short&r=json&tomatoes=true' #抓取年分，導演，編劇，影片id
+u = 'http://www.omdbapi.com/?i={}&y=&plot=short&r=json&tomatoes=true'
 cast = 'http://imdb.wemakesites.net/api/{}' #抓取演員
 staff = 'http://www.imdb.com/xml/find?json=1&nr=1&nm=on&q={}' #抓取演員id
 
-with codecs.open(path+"movie.txt",'rb','utf8') as f:
+#第一層電影提取
+'''with codecs.open(path+"movie.txt",'rb','utf8') as f:
     for line in f:
-        movie.append(line.strip())
+        movie.append(line.strip())'''
+
+#第二層電影提取
+with codecs.open(path+"movie_more_exactly.csv",'rb','utf8') as f:
+    title = f.readline()
+    content = f.readlines()
+    
+    for i in content:
+        temp = i.strip().split(',')
+        movie.append(temp[len(temp)-6])
         
 #從電影名稱得到電影ID，並生成電影相關資訊
 '''with codecs.open(path+"movie.csv",'wb','utf8') as f:
@@ -496,16 +507,38 @@ index = 1
 
 #產生演員相關資訊，演員不見得是對的QQ
 #新修正已OK，但須注意縮寫名字
-'''with codecs.open(path+"actor.csv",'wb','utf8') as f:
+with codecs.open(path+"second_actor.csv",'wb','utf8') as f:
     #print ("name,id,imdbID,job,job comment\r\n")
     f.write("name,id,imdbID,job,job comment\r\n")
     for file in movie:
         print (file)
-        content = requests.get(u.format('+'.join(file.split())))
-        resp = json.loads(content.text)
+        #content = requests.get(u.format('+'.join(file.split())))
         
-        res = requests.get(imdb_cast.format(resp["imdbID"]))
-        soup = BeautifulSoup(res.text, "lxml")
+        check = True
+        
+        while check:
+            try:
+                content = requests.get(u.format(file))
+                resp = json.loads(content.text)
+                check = False
+            except:
+                print ('error u connect')
+                with codecs.open(path+'error.txt','ab','utf8') as e:
+                    e.write('error u connect'+'\r\n')
+                time.sleep(30)
+                
+        check3 = True
+        
+        while check3:
+            try:
+                res = requests.get(imdb_cast.format(resp["imdbID"]))
+                soup = BeautifulSoup(res.text, "lxml")
+                check3 = False
+            except:
+                print ('error imdb connect')
+                with codecs.open(path+'error.txt','ab','utf8') as e:
+                    e.write('error imdb connect'+'\r\n')
+                time.sleep(30)
 
         def name_find(job):
 
@@ -540,12 +573,24 @@ index = 1
                     f.write(name+','+idd+','+imdbid+','+job+','+job_comment+'\r\n')
                 except:
                     print ('error',temp[0],resp["imdbID"])
+                    with codecs.open(path+'error.txt','ab','utf8') as e:
+                        e.write('error'+','+temp[0]+','+resp["imdbID"]+'\r\n')
                 
 
         def actor_find():
+            
+            check2 = True
 
-            content3 = requests.get(cast.format(resp["imdbID"]))
-            resp3 = json.loads(content3.text)
+            while check2:
+                try:
+                    content3 = requests.get(cast.format(resp["imdbID"]))
+                    resp3 = json.loads(content3.text)
+                    check2 = False
+                except:
+                    print ('error cast connect')
+                    with codecs.open(path+'error.txt','ab','utf8') as e:
+                        e.write('error cast connect'+'\r\n')
+                    time.sleep(30)
 
             for actor in resp3["data"]["cast"]:
 
@@ -572,16 +617,18 @@ index = 1
                     f.write(name+','+idd+','+imdbid+','+"Actor"+','+"(NaN)"+'\r\n')
                 except:
                     print ('error',actor,resp["imdbID"])
+                    with codecs.open(path+'error.txt','ab','utf8') as e:
+                        e.write('error'+','+actor+','+resp["imdbID"]+'\r\n')
 
         name_find("Director")
         name_find("Writer")
         actor_find()
         #time.sleep(40)
         
-        if index % 10 == 0:
-            time.sleep(30)
+        '''if index % 10 == 0:
+            time.sleep(20)'''
         
-        index = index + 1'''
+        index = index + 1
 
 #(沒用過) 確認演員是否真有出演電影
 '''with codecs.open(path+'actor.csv','rb','utf8') as f:
@@ -610,7 +657,7 @@ index = 1
         print (index)'''
 
 #各演員出演電影
-with codecs.open(path+'movie_more.csv','wb','utf8') as m:
+'''with codecs.open(path+'movie_more.csv','wb','utf8') as m:
     with codecs.open(path+'actor.csv','rb','utf8') as f:
         lines = f.readlines()
         lines.pop(0)
@@ -635,13 +682,13 @@ with codecs.open(path+'movie_more.csv','wb','utf8') as m:
             index = index + 1
             time.sleep(5)
             if index % 30 == 0:
-                time.sleep(30)
+                time.sleep(30)'''
         
         
 print ('END')
 
 
-# In[11]:
+# In[1]:
 
 #資料清理，拿掉actor內的comment，1、2層之間連結處理
 import codecs
@@ -653,7 +700,8 @@ path = "C:\\Users\\user\\Desktop\\"
 u= 'http://www.omdbapi.com/?i={}&y=&plot=short&r=json&tomatoes=true'
 dic = {}
 
-'''with codecs.open(path+'actor.csv','rb','utf8') as f:
+#去除comment
+'''with codecs.open(path+'second_actor.csv','rb','utf8') as f:
     with codecs.open(path+'actor_com.csv','wb','utf8') as g:
         
         content = f.readlines()
@@ -662,7 +710,6 @@ dic = {}
             temp = i.split(',')
             
             g.write(temp[0]+','+temp[1]+','+temp[2]+','+temp[3]+'\r\n')'''
-
 
 #重複電影資料清理
 '''with codecs.open(path+"movie_more_clean.csv",'wb','utf8') as g:
@@ -740,7 +787,7 @@ with codecs.open(path+"movie_plus.csv",'wb','utf8') as g:
                 g.write(i)'''
 
 #去除N/A
-with codecs.open(path+'movie_more_exactly.csv','wb','utf') as g:
+'''with codecs.open(path+'movie_more_exactly.csv','wb','utf') as g:
     with codecs.open(path+'movie_more_only.csv','rb','utf8') as f:
         title = f.readline()
         content = f.readlines()
@@ -753,12 +800,53 @@ with codecs.open(path+'movie_more_exactly.csv','wb','utf') as g:
             check = [temp[-3],temp[-2],temp[-1]]
             
             if 'N/A' not in check:
-                g.write(i)
+                g.write(i)'''
+
+#判斷1層的電影是否在2層內
+'''with codecs.open(path+'movie_more_exactly.csv','rb','utf') as g:
+    with codecs.open(path+'movie_plus.csv','rb','utf8') as f:
+        title = f.readline()
+        title = g.readline()
+        content1 = f.readlines()
+        content2 = g.readlines()
+        
+        first = []
+        second = []
+        
+        for i in content1:
+            temp = i.strip().split(',')
+            first.append(temp[len(temp)-6])
+            
+        for i in content2:
+            temp = i.strip().split(',')
+            second.append(temp[len(temp)-6])
+        
+        for i in first:
+            if i not in second:
+                print (i)'''
+
+
+with codecs.open(path+'second_actor_clean.csv','wb','utf8') as g:
+    with codecs.open(path+'second_actor.csv','rb','utf8') as f:
+        title = f.readline()
+        
+        content = f.readlines()
+        
+        temp = []
+        
+        g.write(title)
+        
+        for i in content:
+            if i not in temp:
+                temp.append(i)
+        
+        for i in temp:
+            g.write(i)
 
 print ('END')
 
 
-# In[23]:
+# In[ ]:
 
 #統計資料內數值(其實直接用R跑比較快)
 import codecs
@@ -883,5 +971,100 @@ with codecs.open(path+'movie_more_exactly.csv','rb','utf8') as f:
         print (i,year[i])'''
     
         
+print ('END')
+
+
+# In[13]:
+
+#將資料匯入資料庫內
+import codecs
+import pymysql
+import time
+
+connection = pymysql.connect(host="127.0.0.1", user="redwing", passwd="", db="Oscar",charset='utf8')
+path = "C:\\Users\\user\\Desktop\\"
+
+sql = "INSERT into movie(Title,imdbID,Year,Type,Genre,imdbRating,tomatoMeter)     values(\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\")"
+
+sql2 = "INSERT into actor(name,nameID,movieID,job)     values(\"{}\",\"{}\",\"{}\",\"{}\")"
+
+try:
+    #電影
+    '''with connection.cursor() as cursor:
+        with codecs.open(path+'movie_more_exactly.csv','rb','utf8') as f:
+            title = f.readline()
+            long = len(title.strip().split(','))
+            
+            content = f.readlines()
+            final = []
+            
+            for i in content:
+                temp = i.strip().split(',')
+                
+                if len(temp) > long:
+                    final.append(','.join(temp[0:len(temp)-long+1]))
+                    for j in temp[len(temp)-long+1:]:
+                        final.append(j)
+                else:
+                    final = temp
+                    
+                cursor.execute(sql.format(final[0][1:-1],final[1],final[2],final[3],final[4],final[5],final[6]))
+                    
+                final = []'''
+    
+    #演員
+    '''with connection.cursor() as cursor:
+        with codecs.open(path+'second_actor_clean.csv','rb','utf8') as f:
+            title = f.readline()
+            long = len(title.strip().split(','))
+            
+            size = 0
+            
+            content = f.readlines()
+            
+            for i in content:
+                temp = i.strip().split(',')
+            
+                cursor.execute(sql2.format(temp[0],temp[1],temp[2],temp[3]))'''
+    
+    #演員(no job)
+    '''with connection.cursor() as cursor:
+        cursor.execute("select * from `actor`")
+        
+        ss = "INSERT into actor_without_job(name,nameID,movieID) value(\"{}\",\"{}\",\"{}\")"
+        
+        actor = []
+        index = 0
+        
+        for i in cursor:
+            temp = [i[1],i[2],i[3]]
+            if temp not in actor:
+                actor.append(temp)
+            index = index + 1
+            if index % 1000 == 0:
+                print (index)
+        
+        for i in actor:
+            cursor.execute(ss.format(i[0],i[1],i[2]))'''
+    
+    with connection.cursor() as cursor:
+        cursor.execute("select * from `movie`")
+        
+        gg = "INSERT into movie_genre(Title,imdbID,Year,Type,Genre) value(\"{}\",\"{}\",\"{}\",\"{}\",\"{}\")"
+        
+        movie = []
+        
+        for i in cursor:
+            temp = i[4].split('&')
+            for j in temp:
+                movie.append([i[0],i[1],i[2],i[3],j])
+                
+        for i in movie:
+            cursor.execute(gg.format(i[0],i[1],i[2],i[3],i[4]))
+            
+    connection.commit()
+except:
+    connection.close()   
+    
 print ('END')
 
