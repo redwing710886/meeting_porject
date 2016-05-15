@@ -688,7 +688,7 @@ with codecs.open(path+"second_actor.csv",'wb','utf8') as f:
 print ('END')
 
 
-# In[1]:
+# In[ ]:
 
 #資料清理，拿掉actor內的comment，1、2層之間連結處理
 import codecs
@@ -974,7 +974,7 @@ with codecs.open(path+'movie_more_exactly.csv','rb','utf8') as f:
 print ('END')
 
 
-# In[13]:
+# In[9]:
 
 #將資料匯入資料庫內
 import codecs
@@ -982,11 +982,11 @@ import pymysql
 import time
 
 connection = pymysql.connect(host="127.0.0.1", user="redwing", passwd="", db="Oscar",charset='utf8')
-path = "C:\\Users\\user\\Desktop\\"
+path = "C:\\Users\\user\\Desktop\\oscar\\"
 
 sql = "INSERT into movie(Title,imdbID,Year,Type,Genre,imdbRating,tomatoMeter)     values(\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\")"
 
-sql2 = "INSERT into actor(name,nameID,movieID,job)     values(\"{}\",\"{}\",\"{}\",\"{}\")"
+sql2 = "INSERT into actor_full(name,nameID,movieID,job)     values(\"{}\",\"{}\",\"{}\",\"{}\")"
 
 try:
     #電影
@@ -1029,7 +1029,7 @@ try:
     
     #演員(no job)
     '''with connection.cursor() as cursor:
-        cursor.execute("select * from `actor`")
+        cursor.execute("select * from `actor_full`")
         
         ss = "INSERT into actor_without_job(name,nameID,movieID) value(\"{}\",\"{}\",\"{}\")"
         
@@ -1047,7 +1047,8 @@ try:
         for i in actor:
             cursor.execute(ss.format(i[0],i[1],i[2]))'''
     
-    with connection.cursor() as cursor:
+    #電影分類
+    '''with connection.cursor() as cursor:
         cursor.execute("select * from `movie`")
         
         gg = "INSERT into movie_genre(Title,imdbID,Year,Type,Genre) value(\"{}\",\"{}\",\"{}\",\"{}\",\"{}\")"
@@ -1060,11 +1061,290 @@ try:
                 movie.append([i[0],i[1],i[2],i[3],j])
                 
         for i in movie:
-            cursor.execute(gg.format(i[0],i[1],i[2],i[3],i[4]))
+            cursor.execute(gg.format(i[0],i[1],i[2],i[3],i[4]))'''
+    
+    #演員單純資料
+    with connection.cursor() as cursor:
+        cursor.execute("select * from `actor_without_job`")
+        
+        ss = "INSERT into actor(name,nameID) value(\"{}\",\"{}\")"
+        
+        actor = []
+        index = 0
+        
+        for i in cursor:
+            temp = [i[1],i[2]]
+            if temp not in actor:
+                actor.append(temp)
+            index = index + 1
+            if index % 1000 == 0:
+                print (index)
+        
+        for i in actor:
+            cursor.execute(ss.format(i[0],i[1]))
             
     connection.commit()
 except:
     connection.close()   
+    
+print ('END')
+
+
+# In[24]:
+
+#node link建立
+import pymysql
+import codecs
+import time
+
+connection = pymysql.connect(host="127.0.0.1", user="redwing", passwd="", db="oscar",charset='utf8')
+path = "C:\\Users\\user\\Desktop\\"
+
+try:
+    #完全node
+    '''with connection.cursor() as cursor:
+        sql = "select * from `actor`"
+        sql2 = "select count(*) from `actor_without_job` where nameID = '{}'"
+
+        cursor.execute(sql)
+
+        actor = []
+        index = 0
+
+        for i in cursor:
+            actor.append([i[0],i[1],i[2]])
+
+        with codecs.open(path+'node.txt','wb','utf8') as f:
+            f.write("id\tname\tnameID\tweight\n")
+            for i in actor:
+                cursor.execute(sql2.format(i[2]))
+                num = 0
+                for j in cursor:
+                    num = j[0]
+                f.write(str(i[0])+'\t'+i[1]+'\t'+i[2]+'\t'+str(num)+'\n')
+                index = index + 1
+                if index % 1000 == 0:
+                    print (index)'''
+
+    #完全link
+    '''with connection.cursor() as cursor:
+        sql = "select `imdbID` from `movie`"
+        sql2 = "select `nameID` from `actor_without_job` where movieID = '{}'"
+        sql3 = "select `id` from `actor` where nameID = '{}'"
+
+        cursor.execute(sql)
+
+        movie = []
+        index = 0
+
+        for i in cursor:
+            movie.append(i[0])
+
+        with codecs.open(path+'link.txt','wb','utf8') as f:
+            f.write('source\ttarget\ttype\tweight\r\n')
+            for i in movie:
+                name = []
+                idd = []
+                cursor.execute(sql2.format(i))
+                for j in cursor:
+                    name.append(j[0])
+                for j in name:
+                    cursor.execute(sql3.format(j))
+                    for k in cursor:
+                        idd.append(k[0])
+                idd = sorted(idd)
+                link = []
+                for j in range(len(idd)):
+                    for k in range(len(idd)-j-1):
+                        t = k + j + 1
+
+                        link.append((idd[j],idd[t]))
+                for j in link:
+                    f.write(str(j[0])+'\t'+str(j[1])+'\tUndirected\t1\r\n')
+
+                index = index + 1
+                if index % 100 == 0:
+                    print (index)'''
+
+    #部分node 年份
+    '''with connection.cursor() as cursor:
+        sql = "SELECT DISTINCT `name`,`nameID` FROM `actor_without_job` where `movieID` \
+            in (select `imdbID` from `movie` where `Year` < 2011 )"
+        sql2 = "SELECT count(*) FROM `actor_without_job` where `nameID` = '{}' and `movieID` \
+            in (select `imdbID` from `movie` where `Year` < 2011 )"
+
+        cursor.execute(sql)
+
+        actor = []
+        index = 1
+
+        for i in cursor:
+            actor.append([index,i[0],i[1]])
+            index = index + 1
+
+        index2 = 0
+
+        with codecs.open(path+'node.txt','wb','utf8') as f:
+            f.write("id\tname\tnameID\tweight\n")
+            for i in actor:
+                cursor.execute(sql2.format(i[2]))
+                num = 0
+                for j in cursor:
+                    num = j[0]
+                f.write(str(i[0])+'\t'+i[1]+'\t'+i[2]+'\t'+str(num)+'\n')
+
+                index2 = index2 + 1
+                if index2 % 1000 == 0:
+                    print (index2)'''
+    
+    #部分link 年份
+    '''with connection.cursor() as cursor:
+        sql = "select `imdbID` from `movie` where `Year` < 2011"
+        sql2 = "select `nameID` from `actor_without_job` where `movieID` = '{}'"
+
+        with codecs.open(path+'node.txt','rb','utf8') as f:
+            title = f.readline()
+
+            content = f.readlines()
+
+            actor = {}
+            index = 0
+
+            for i in content:
+                temp = i.strip().split("\t")
+
+                if temp[2] not in actor:
+                    actor[temp[2]] = int(temp[0])
+                else:
+                    print (temp)
+                    break
+
+            cursor.execute(sql)
+
+            idd = [] #影片id
+
+            for i in cursor:
+                idd.append(i[0])
+
+            with codecs.open(path+'link.txt','wb','utf8') as g:
+                g.write('source\ttarget\ttype\tweight\r\n')
+                for i in idd:
+                    cursor.execute(sql2.format(i))
+
+                    member = []
+                    link = []
+
+                    for j in cursor:
+                        member.append(actor[j[0]])
+
+                    member = sorted(member)
+
+                    for j in range(len(member)):
+                        for k in range(len(member)-j-1):
+                            t = k + j + 1
+
+                            link.append((member[j],member[t]))
+
+                    for j in link:
+                        g.write(str(j[0])+'\t'+str(j[1])+'\tUndirected\t1\r\n')
+
+                    index = index + 1
+                    if index % 100 == 0:
+                        print (index)'''
+
+    #部分node genre
+    with connection.cursor() as cursor:
+        sql = "SELECT DISTINCT `name`,`nameID` FROM `actor_without_job` where `movieID` \
+            in (select `imdbID` from `movie_genre` where `Genre` = '{}' )"
+        sql2 = "SELECT count(*) FROM `actor_without_job` where `nameID` = '{}' and `movieID` \
+            in (select `imdbID` from `movie_genre` where `Genre` = '{}' )"
+        
+        genre = 'Adventure'
+
+        cursor.execute(sql.format(genre))
+
+        actor = []
+        index = 1
+
+        for i in cursor:
+            actor.append([index,i[0],i[1]])
+            index = index + 1
+
+        index2 = 0
+
+        with codecs.open(path+'node.txt','wb','utf8') as f:
+            f.write("id\tname\tnameID\tweight\n")
+            for i in actor:
+                cursor.execute(sql2.format(i[2],genre))
+                num = 0
+                for j in cursor:
+                    num = j[0]
+                f.write(str(i[0])+'\t'+i[1]+'\t'+i[2]+'\t'+str(num)+'\n')
+
+                index2 = index2 + 1
+                if index2 % 1000 == 0:
+                    print (index2)
+    
+    #部分link genre
+    with connection.cursor() as cursor:
+        sql = "select `imdbID` from `movie_genre` where `Genre` = '{}'"
+        sql2 = "select `nameID` from `actor_without_job` where `movieID` = '{}'"
+        
+        genre = 'Adventure'
+
+        with codecs.open(path+'node.txt','rb','utf8') as f:
+            title = f.readline()
+
+            content = f.readlines()
+
+            actor = {}
+            index = 0
+
+            for i in content:
+                temp = i.strip().split("\t")
+
+                if temp[2] not in actor:
+                    actor[temp[2]] = int(temp[0])
+                else:
+                    print (temp)
+                    break
+
+            cursor.execute(sql.format(genre))
+
+            idd = [] #影片id
+
+            for i in cursor:
+                idd.append(i[0])
+
+            with codecs.open(path+'link.txt','wb','utf8') as g:
+                g.write('source\ttarget\ttype\tweight\r\n')
+                for i in idd:
+                    cursor.execute(sql2.format(i))
+
+                    member = []
+                    link = []
+
+                    for j in cursor:
+                        member.append(actor[j[0]])
+
+                    member = sorted(member)
+
+                    for j in range(len(member)):
+                        for k in range(len(member)-j-1):
+                            t = k + j + 1
+
+                            link.append((member[j],member[t]))
+
+                    for j in link:
+                        g.write(str(j[0])+'\t'+str(j[1])+'\tUndirected\t1\r\n')
+
+                    index = index + 1
+                    if index % 100 == 0:
+                        print (index)
+                        
+except:
+    print ('error')
+    connection.close()
     
 print ('END')
 
