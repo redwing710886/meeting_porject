@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[8]:
+# In[32]:
 
 #自由中國開頭資料匯入
 import os
@@ -9,7 +9,7 @@ import codecs
 import time
 
 path = "C:\\Users\\user\\Desktop\\課業相關\\碩士班\\SNA\\meeting\\source\\FreeChina\\"
-out_path = "C:\\Users\\user\\Desktop\\Cbb&P\\作者\\"
+out_path = "C:\\Users\\user\\Desktop\\副詞\\"
 desktop_path = "C:\\Users\\user\\Desktop\\"
 
 file_list = []
@@ -52,7 +52,7 @@ for i in authors:
     print (i[0],i[1])
 
 
-# In[9]:
+# In[20]:
 
 #開頭詞彙數量比較
 header = {}
@@ -73,7 +73,8 @@ for file in file_list:
                     check = True
                 if len(lines[-1].split('(')) == 2:
                     if lines[-1].split('(')[1][0:-1] == 'PERIODCATEGORY':
-                        if head.split('(')[1][0:-1] == 'Cbb' or head.split('(')[1][0:-1] == 'P':
+                        head_cut = head.split('(')[1]
+                        if len(head_cut) < 5 and (head_cut[0:1] == 'D' or head_cut[0:1] == 'C' or head_cut[0:-1] == 'P'):
                             if head not in header:
                                 header[head] = 1
                             else:
@@ -82,7 +83,7 @@ for file in file_list:
                     
 header = sorted(header.items(), key=lambda d:d[1], reverse = True) 
 
-with codecs.open(desktop_path+'all2.txt','wb','utf8') as g:
+with codecs.open(desktop_path+'FC_all.txt','wb','utf8') as g:
     for i in header:
         #print (i[0],i[1])
         g.write(str(i[0])+' '+str(i[1])+'\r\n')
@@ -90,7 +91,7 @@ with codecs.open(desktop_path+'all2.txt','wb','utf8') as g:
 print ("END")
 
 
-# In[12]:
+# In[17]:
 
 #匯出各作者的開頭詞彙分布
 import time
@@ -142,7 +143,8 @@ for file in file_list:
                     check = True
                 if len(line[-1].split('(')) == 2:
                     if line[-1].split('(')[1][0:-1] == 'PERIODCATEGORY':
-                        if head.split('(')[1][0:-1] == 'Cbb' or head.split('(')[1][0:-1] == 'P':
+                        head_cut = head.split('(')[1]
+                        if len(head_cut) < 5 and (head_cut[0:1] == 'D' or head_cut[0:1] == 'C' or head_cut[0:-1] == 'P'):
                             if head not in header:
                                 header[head] = 1
                             else:
@@ -245,23 +247,24 @@ for name in author_list:
 print ('END')
 
 
-# In[34]:
+# In[33]:
 
 #對特定作者找出特定詞彙的分布網路
-out_path3 = "C:\\Users\\user\\Desktop\\Cbb&P\\以自由中國為基準\\特定作者開頭詞向量空間(比例)\\"
-out_path4 = "C:\\Users\\user\\Desktop\\Cbb&P\\以自由中國為基準\\特定作者開頭詞向量空間(正規化)\\"
+#out_path3 = "C:\\Users\\user\\Desktop\\Cbb&P\\以自由中國為基準\\特定作者開頭詞向量空間(比例)\\"
+out_path4 = "C:\\Users\\user\\Desktop\\C&P&D\\以自由中國為基準\\特定作者開頭詞向量空間(正規化)\\副詞\\"
 
 author_names = ["雷震","龍平甫","殷海光","蔣勻田","徐訏","胡適","羅鴻詔","陳之藩","孟瑤","朱伴耘"]
 beginning = []
 
-with codecs.open(desktop_path+"all2.txt",'rb','utf8') as f:
+with codecs.open(desktop_path+"C&P&D\\開頭\\D_all.txt",'rb','utf8') as f:
     content = f.readlines()
     
     for i in content:
-        if int(i.split()[1]) > 1000:
+        beginning.append(i.split()[0])
+        '''if int(i.split()[1]) > 1000:
             beginning.append(i.split()[0])
         else:
-            break
+            break'''
             
 for name in author_names:
     
@@ -376,5 +379,41 @@ with codecs.open(desktop_path+'scs_all.txt','wb','utf8') as g:
         #print (i[0],i[1])
         g.write(i[0]+' '+str(i[1])+'\r\n')
     
+print ('END')
+
+
+# In[54]:
+
+#自由中國總詞彙數
+count = 0
+
+for file in file_list:
+    
+    with codecs.open(path+file,'rb','utf8') as f:
+        content = f.readlines()
+        
+        for line in content:
+            line = line.split()
+            
+            if line[0] != '#':
+                count += len(line)
+
+print (count)
+
+normal = []
+
+with codecs.open(desktop_path+'FC_all.txt','rb','utf8') as f:
+    content = f.readlines()
+    
+    for line in content:
+        line = line.split()
+        
+        num = str((round(int(line[1])/count*1000000,5)))
+        normal.append((line[0],num))
+
+with codecs.open(desktop_path+'normal_all.csv','wb','utf8') as g:
+    for i in normal:
+        g.write(i[0]+','+i[1]+'\r\n')
+                    
 print ('END')
 
