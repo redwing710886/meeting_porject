@@ -66,7 +66,7 @@ import codecs
 
 #host位置為該資料庫所在ip位置，此例127.0.0.1為本機位置
 connection = pymysql.connect(host="140.119.164.170", user="salan40319", passwd="104753018", db="FreeChina_updated",charset='utf8')
-out_path = "C:\\Users\\user\\Desktop\\日記\\"
+out_path = "C:\\Users\\user\\Desktop\\"
 
 try:
     with connection.cursor() as cursor:
@@ -93,6 +93,7 @@ try:
                                 g.write(i+' ')
                             g.write('\r\n')
                             g.write(' '.join(content)+'\r\n')
+                            time.sleep(0.5)
                         title = []
                         content = []
                         print (count)
